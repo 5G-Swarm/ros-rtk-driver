@@ -19,6 +19,7 @@ class RTK:
 
         self.speed = 0.
         self.yaw = 0.
+        self.err_yaw = 0.
         self.latitude = 0.
         self.longitude = 0.
 
@@ -31,6 +32,7 @@ class RTK:
         while True:
             try:
                 line = self.serial.readline()
+                line = line.decode()
                 self.parse(line)
 
                 ros_msg = GPSFix()
@@ -40,6 +42,7 @@ class RTK:
                 ros_msg.latitude = self.latitude
                 ros_msg.longitude = self.longitude
                 ros_msg.dip = self.yaw
+                ros_msg.err_dip = self.err_yaw
                 ros_msg.status = GPSStatus()
                 ros_msg.status.status = 2
                 # ros_msg.speed = self.speed
@@ -53,6 +56,7 @@ class RTK:
         if data[:9] == '#HEADINGA':
             sp_line = data.split(',')
             self.yaw = float(sp_line[12])
+            self.err_yaw = float(sp_line[15])
         if data[:6] == '$GPGGA':
             rmc = pynmea2.parse(data)
             self.latitude = rmc.latitude
