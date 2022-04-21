@@ -8,7 +8,7 @@ import time
 
 import pynmea2
 from std_msgs.msg import Header
-from gps_common.msg import GPSFix
+from gps_common.msg import GPSFix, GPSStatus
 
 class RTK:
     def __init__(self, port='/dev/ttyUSB0', ros_pub=None):
@@ -36,9 +36,12 @@ class RTK:
                 ros_msg = GPSFix()
                 ros_msg.header = Header()
                 ros_msg.header.stamp = rospy.Time.now()
+                ros_msg.header.frame_id = 'gnss_link'
                 ros_msg.latitude = self.latitude
                 ros_msg.longitude = self.longitude
-                ros_msg.track = self.yaw
+                ros_msg.dip = self.yaw
+                ros_msg.status = GPSStatus()
+                ros_msg.status.status = 2
                 # ros_msg.speed = self.speed
                 if self.ros_pub is not None:
                     self.ros_pub.publish(ros_msg)
@@ -72,7 +75,7 @@ def open_serial():
 
 if __name__ == '__main__':
     rospy.init_node('rtk', anonymous=True)
-    rtk_pub = rospy.Publisher('/rtk', GPSFix, queue_size=0)
+    rtk_pub = rospy.Publisher('/jzhw/gps/fix', GPSFix, queue_size=0)
 
     usb = open_serial()
     rtk = RTK('/dev/' + usb, rtk_pub)
