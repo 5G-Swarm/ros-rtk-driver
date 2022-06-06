@@ -6,7 +6,7 @@ import serial
 import threading
 import time
 
-import pynmea2
+# import pynmea2
 from std_msgs.msg import Header
 from gps_common.msg import GPSFix, GPSStatus
 
@@ -76,6 +76,11 @@ class RTK:
         else:
             return False
 
+    def gps60to10(self, la, la_dig, lo, lo_dig):
+        new_la = la + la_dig/60.
+        new_lo = lo + lo_dig/60.
+        return new_la, new_lo
+
     def parse(self, data):
         if data[:9] == '#HEADINGA':
             sp_line = data.split(',')
@@ -89,9 +94,17 @@ class RTK:
             self.new_heading = True
 
         if data[:6] == '$GPGGA':
-            rmc = pynmea2.parse(data)
-            self.latitude = rmc.latitude
-            self.longitude = rmc.longitude
+            sp_line = data.split(',')
+            la = 30#(float(sp_line[2])-float(sp_line[2])%100)/100
+            la_dig = float(sp_line[2]) % 100
+            lo = 120#(float(sp_line[4])-float(sp_line[4])%100)/100
+            lo_dig = float(sp_line[4]) % 100
+            new_la, new_lo = self.gps60to10(la, la_dig, lo, lo_dig)
+            # rmc = pynmea2.parse(data)
+            # self.latitude = rmc.latitude
+            # self.longitude = rmc.longitude
+            self.latitude = new_la
+            self.longitude = new_lo
 
             self.last_gps = time.time()
             self.new_gps = True
